@@ -1,0 +1,16 @@
+# test runner built with `make test`
+test/run
+
+# doc artifacts
+html/*
+
+# scratch file for testing linking
+scratch.cc
+*.o
+*.a
+*.so*
+*.d
+
+main.cc
+main.s
+a.out
