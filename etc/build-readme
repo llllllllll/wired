@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+import subprocess
+import sys
+
+template = """\
+wired
+=====
+
+wip
+
+compile time fixed point scalars and arrays.
+
+Example
+-------
+
+.. code-block:: c++
+
+{src}
+
+.. code-block::
+
+   $ ./a.out
+{out}
+"""
+
+
+def indent(text):
+    return '\n'.join(
+        ('   ' + line) if line else '' for line in text.splitlines()
+    )
+
+
+def main(argv):
+    def error(msg, returncode=1):
+        print('{}: {}'.format(argv[0], msg), file=sys.stderr)
+        exit(returncode)
+
+    if len(argv) != 3:
+        error('expected exactly 2 arguments')
+
+    srcfile = argv[1]
+    aout = argv[2]
+
+    result = subprocess.run([aout], stdout=subprocess.PIPE)
+    if result.returncode:
+        error(
+            './a.out exited with {}'.format(result.returncode),
+            result.returncode,
+        )
+
+    with open(srcfile) as f:
+        src = indent(f.read())
+
+    print(
+        template.format(src=src, out=indent(result.stdout.decode('ascii'))),
+        end='',
+    )
+
+
+if __name__ == '__main__':
+    main(sys.argv)

@@ -11,6 +11,6 @@ scratch.cc
 *.so*
 *.d
 
-main.cc
-main.s
+etc/test
+etc/test.s
 a.out

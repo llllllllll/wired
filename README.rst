@@ -13,7 +13,7 @@ Example
    #include <iostream>
 
    #include "wired/array.h"
-   #include "wired/fixed.h"
+   #include "wired/scalar.h"
 
    static constexpr std::uint8_t base = 16;
 
@@ -52,11 +52,19 @@ Example
        std::cout << "exp(b): " << wired::exp<b>::as_double() << '\n';
 
        // broadcasted arithmetic
-       std::cout << "values + a: ";
+       std::cout << "values + a:";
        for (auto d : wired::add<values, a>::as_doubles()) {
-           std::cout << d << ' ';
+           std::cout << ' ' << d;
        }
        std::cout << '\n';
+
+       // reductions
+       std::cout << "sum<values>: " << wired::sum<values>::as_double() << '\n';
+
+       // arbitrary reduction (could use product, but just for show)
+       std::cout << "reduce<sum, values>: "
+                 << wired::reduce<wired::mul, values>::as_double()
+                 << '\n';
 
        return 0;
    }
@@ -72,3 +80,5 @@ Example
    (a * b + c) / d: 7
    exp(b): 148.408
    values + a: 4 7 2.5 3.5
+   sum<values>: 9
+   reduce<sum, values>: 7.5

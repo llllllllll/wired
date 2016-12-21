@@ -6,8 +6,6 @@
 
 #include "wired/utils.h"
 
-#include <iostream>
-
 namespace wired {
 template<std::uint8_t fbits, std::int32_t data>
 struct fixed {
@@ -72,8 +70,8 @@ struct from_ratio {};
 
 template<std::uint8_t fbits, std::intmax_t num, std::intmax_t den>
 struct from_ratio<fbits, std::ratio<num, den>> {
-    typedef div<from_integral<fbits, num>,
-                from_integral<fbits, den>> type;
+    typedef typename div<from_integral<fbits, num>,
+                         from_integral<fbits, den>>::type type;
 };
 
 template<typename T>
@@ -115,13 +113,11 @@ public:
 template<typename T, typename U>
 using add = typename dispatch::add<T, U>::type;
 
-
 template<typename T, typename U>
 using sub = typename dispatch::sub<T, U>::type;
 
 template<typename T, typename U>
 using mul = typename dispatch::mul<T, U>::type;
-
 
 template<typename T, typename U>
 using div = typename dispatch::div<T, U>::type;
