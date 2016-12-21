@@ -4,6 +4,7 @@
 #include <ratio>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 #include "wired/scalar.h"
 
@@ -24,7 +25,7 @@ struct getitem<array<Vs...>, n> {
     // this will generate an error already but the message is horrific
     static_assert(n < sizeof...(Vs), "getitem index out of bounds");
     typedef std::remove_reference_t<
-        decltype(std::get<n>(std::make_tuple(Vs{}...)))> type;
+        decltype(std::get<n>(std::make_tuple(std::declval<Vs>()...)))> type;
 };
 
 template<typename... Vs, typename U>
