@@ -15,82 +15,85 @@ struct array {
     }
 };
 
+namespace dispatch {
 template<typename T, std::size_t n>
-struct _getitem {};
+struct getitem {};
 
 template<std::size_t n, typename... Vs>
-struct _getitem<array<Vs...>, n> {
+struct getitem<array<Vs...>, n> {
     // this will generate an error already but the message is horrific
     static_assert(n < sizeof...(Vs), "getitem index out of bounds");
     typedef std::remove_reference_t<
         decltype(std::get<n>(std::make_tuple(Vs{}...)))> type;
 };
 
-template<typename T, std::size_t n>
-using getitem = typename _getitem<T, n>::type;
 
 template<typename... Vs, typename U>
-struct _add<array<Vs...>, U> {
+struct add<array<Vs...>, U> {
     typedef array<add<Vs, U>...> type;
 };
 
 template<typename U, typename... Vs>
-struct _add<U, array<Vs...>> {
+struct add<U, array<Vs...>> {
     typedef array<add<U, Vs>...> type;
 };
 
 template<typename... Vs, typename ...Us>
-struct _add<array<Vs...>, array<Us...>> {
+struct add<array<Vs...>, array<Us...>> {
     typedef array<add<Vs, Us>...> type;
 };
 
 template<typename... Vs, typename U>
-struct _sub<array<Vs...>, U> {
+struct sub<array<Vs...>, U> {
     typedef array<sub<Vs, U>...> type;
 };
 
 template<typename U, typename... Vs>
-struct _sub<U, array<Vs...>> {
+struct sub<U, array<Vs...>> {
     typedef array<sub<U, Vs>...> type;
 };
 
 template<typename... Vs, typename ...Us>
-struct _sub<array<Vs...>, array<Us...>> {
+struct sub<array<Vs...>, array<Us...>> {
     typedef array<sub<Vs, Us>...> type;
 };
 
 template<typename... Vs, typename U>
-struct _mul<array<Vs...>, U> {
+struct mul<array<Vs...>, U> {
     typedef array<mul<Vs, U>...> type;
 };
 
 template<typename U, typename... Vs>
-struct _mul<U, array<Vs...>> {
+struct mul<U, array<Vs...>> {
     typedef array<mul<U, Vs>...> type;
 };
 
 template<typename... Vs, typename ...Us>
-struct _mul<array<Vs...>, array<Us...>> {
+struct mul<array<Vs...>, array<Us...>> {
     typedef array<mul<Vs, Us>...> type;
 };
 
 template<typename... Vs, typename U>
-struct _div<array<Vs...>, U> {
+struct div<array<Vs...>, U> {
     typedef array<div<Vs, U>...> type;
 };
 
 template<typename U, typename... Vs>
-struct _div<U, array<Vs...>> {
+struct div<U, array<Vs...>> {
     typedef array<div<U, Vs>...> type;
 };
 
 template<typename... Vs, typename ...Us>
-struct _div<array<Vs...>, array<Us...>> {
+struct div<array<Vs...>, array<Us...>> {
     typedef array<div<Vs, Us>...> type;
 };
 
 template<typename... Vs>
-struct _exp<array<Vs...>> {
+struct exp<array<Vs...>> {
     typedef array<exp<Vs>...> type;
 };
+}
+
+template<typename T, std::size_t n>
+using getitem = typename dispatch::getitem<T, n>::type;
 }
