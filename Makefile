@@ -1,6 +1,6 @@
 INCLUDE_DIRS := include/
 INCLUDE := $(foreach d,$(INCLUDE_DIRS), -I$d)
-DFILES := main.d
+DFILES := etc/test.d
 
 .PHONY: all clean
 
