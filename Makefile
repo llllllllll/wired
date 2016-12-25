@@ -16,6 +16,6 @@ README.rst: etc/build-readme etc/test
 	@./$< etc/test.cc ./etc/test > $@
 
 clean:
-	rm main
+	rm etc/test etc/test.d
 
 -include $(DFILES)
