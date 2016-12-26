@@ -152,6 +152,7 @@ Example
    $ bin/csv2p7 data etc/test.csv
 
 .. code-block:: c++
+
    #pragma once
 
    #include <wired/array.h>
