@@ -83,6 +83,13 @@ struct array<V, Vs...>  {
 template<typename... Vs>
 using column_array = array<array<Vs>...>;
 
+template<typename A, typename B>
+constexpr bool shape_compatible =
+    utils::index_sequence_shape_compat<utils::one_pad<shape<A>,
+                                                      shape<B>::size()>,
+                                       utils::one_pad<shape<B>,
+                                                      shape<A>::size()>>;
+
 namespace dispatch {
 template<typename T, std::size_t... ns>
 struct getitem {};
