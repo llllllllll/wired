@@ -3,7 +3,7 @@ wired
 
 wip
 
-compile time fixed point scalars and arrays.
+compile time fixed point scalars and arrays for C++17
 
 Example
 -------
@@ -128,3 +128,55 @@ Example
    shape<a>: {}
    shape<values>: {4}
    shape<arr2d>: {2, 2}
+
+``protocol7``
+-------------
+
+``wired`` also comes with utilities for reading and writing data files in a
+custom format called ``protocol7``. A ``protocol7`` file is a valid C++17
+header file which defines a namespace holding some number of
+``wired::array``\s. ``wired`` comes with a utility, ``csv2p7`` to generate a
+``protocol7`` file from a csv. The resulting ``protocol7`` file contains a
+single 2d ``wired::array`` with no column labels.
+
+.. code-block::
+
+   $ cat etc/test.csv
+   a,b,c
+   1,2,3
+   4,5,7
+   7,8,9
+   $ bin/csv2p7 data etc/test.csv
+   #pragma once
+
+   #include <wired/array.h>
+   #include <wired/scalar.h>
+
+   namespace protocol7 {
+   using data = wired::array<wired::array<wired::fixed<1>, wired::fixed<2>, wired::fixed<3>>,
+                             wired::array<wired::fixed<4>, wired::fixed<5>, wired::fixed<7>>,
+                             wired::array<wired::fixed<7>, wired::fixed<8>, wired::fixed<9>>>;
+   }
+
+.. code-block::
+
+   $ bin/csv2p7 --help
+   usage: bin/csv2p7 [-h] [-o PATH] [--namespace IDENTIFIER] [--fbits UINT8]
+                     NAME SRC
+
+   Convert a csv file into a protocol7 file.
+
+   positional arguments:
+     NAME                  The name of the wired::array generated.
+     SRC                   The path to the source csv file.
+
+   optional arguments:
+     -h, --help            show this help message and exit
+     -o PATH, --output PATH
+                           The path to write the output protocol7 file to. By
+                           default or if '-' is explicitly passed, the output
+                           will be printed to stdout.
+     --namespace IDENTIFIER
+                           The namespace to put the wired::array in.
+     --fbits UINT8         The number of bits to the right of the decimal in the
+                           resulting wired::fixed types.

@@ -13,8 +13,8 @@ test: etc/test
 etc/test: etc/test.cc
 	@$(CXX) $(CXXFLAGS) $(INCLUDE) -MD $< -o etc/test
 
-README.rst: etc/build-readme etc/test
-	@./$< etc/test.cc ./etc/test > $@
+README.rst: etc/build-readme etc/test.cc etc/test bin/csv2p7 etc/test.csv
+	@$^ > $@
 
 clean:
 	rm etc/test etc/test.d

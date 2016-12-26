@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+import csv
+from functools import partial
+from itertools import count
+from string import ascii_letters, digits
+import sys
+from textwrap import dedent
+
+
+_header = dedent(
+    """\
+    #pragma once
+
+    #include <wired/array.h>
+    #include <wired/scalar.h>
+
+    """,
+)
+
+assign = 'using {} = wired::array<'.format
+
+
+def format_row(fbits, indent, row, ix):
+    fbits = ', {}'.format(fbits) if fbits is not None else ''
+    return '{}wired::array<{}>'.format(
+        '' if ix == 0 else ',\n{}'.format(indent),
+        ', '.join('wired::fixed<{}{}>'.format(elem, fbits) for elem in row),
+    )
+
+
+_head_chars = frozenset(ascii_letters + '_')
+_tail_chars = frozenset(ascii_letters + digits + '_')
+
+
+def isidentifier(name):
+    return name[0] in _head_chars and all(c in _tail_chars for c in name)
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        prog=argv[0],
+        description='Convert a csv file into a protocol7 file.',
+    )
+    parser.add_argument(
+        'name',
+        metavar='NAME',
+        type=str,
+        help='The name of the wired::array generated.',
+    )
+    parser.add_argument(
+        'src',
+        metavar='SRC',
+        type=str,
+        help='The path to the source csv file.'
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        metavar='PATH',
+        type=str,
+        default='-',
+        help='The path to write the output protocol7 file to. By default or if'
+        " '-' is explicitly passed, the output will be printed to stdout.",
+    )
+    parser.add_argument(
+        '--namespace',
+        metavar='IDENTIFIER',
+        type=str,
+        default='protocol7',
+        help='The namespace to put the wired::array in.',
+    )
+    parser.add_argument(
+        '--fbits',
+        metavar='UINT8',
+        type=int,
+        default=None,
+        help='The number of bits to the right of the decimal in the resulting'
+        ' wired::fixed types.',
+    )
+    return parser.parse_args(argv[1:])
+
+
+def open_output(name):
+    if name == '-':
+        return sys.stdout
+    return open(name, 'w+')
+
+
+def csv_rows(src):
+    sniffer = csv.Sniffer()
+    sample = src.read(1024)
+    src.seek(0)
+    dialect = sniffer.sniff(sample)
+    has_header = sniffer.has_header(sample)
+    rows = csv.reader(src, dialect=dialect)
+    if has_header:
+        next(rows)
+    return rows
+
+
+def main(argv):
+    def error(msg, returncode=1):
+        print('{}: {}'.format(argv[0], msg), file=sys.stderr)
+        exit(returncode)
+
+    args = parse_args(argv)
+
+    if not isidentifier(args.name):
+        error('--name={} is not a valid C++ identifier'.format(args.name))
+
+    if not isidentifier(args.namespace):
+        error(
+            '--namespace={} is not a valid C++ identifier'.format(
+                args.namespace,
+            ),
+        )
+
+    if args.fbits is not None and args.fbits > 31:
+        error('--fbits={} > 31'.format(args.fbits))
+
+    with open(args.src, newline='') as src, open_output(args.output) as dst:
+        dst.write(_header)
+        dst.write('namespace {} {{\n'.format(args.namespace))
+        assignment = assign(args.name)
+        dst.write(assignment)
+        dst.writelines(map(
+            partial(format_row, args.fbits, ' ' * len(assignment)),
+            csv_rows(src),
+            count(),
+        ))
+        dst.write('>;\n}\n')
+
+
+if __name__ == '__main__':
+    main(sys.argv)
