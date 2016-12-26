@@ -32,14 +32,20 @@ header file which defines a namespace holding some number of
 ``protocol7`` file from a csv. The resulting ``protocol7`` file contains a
 single 2d ``wired::array`` with no column labels.
 
+Example
+```````
+
 .. code-block::
 
    $ cat {csv_name}
 {csv_contents}
    $ bin/csv2p7 data {csv_name}
+
+.. code-block:: c++
 {csv2p7_example}
 
-Full usage:
+Full Usage
+``````````
 
 .. code-block::
 

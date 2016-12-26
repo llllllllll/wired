@@ -73,7 +73,7 @@ struct array {
 template<typename V, typename... Vs>
 struct array<V, Vs...>  {
     constexpr static std::enable_if_t<
-        (true && ... && utils::index_sequence_eq<shape<V>, shape<Vs>>),
+        (... && utils::index_sequence_eq<shape<V>, shape<Vs>>),
         utils::shape_to_array_type<shape<array<V, Vs...>>>>
         materialize() {
         return {V::materialize(), Vs::materialize()...};

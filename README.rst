@@ -139,6 +139,9 @@ header file which defines a namespace holding some number of
 ``protocol7`` file from a csv. The resulting ``protocol7`` file contains a
 single 2d ``wired::array`` with no column labels.
 
+Example
+```````
+
 .. code-block::
 
    $ cat etc/test.csv
@@ -147,6 +150,8 @@ single 2d ``wired::array`` with no column labels.
    4,5,7
    7,8,9
    $ bin/csv2p7 data etc/test.csv
+
+.. code-block:: c++
    #pragma once
 
    #include <wired/array.h>
@@ -157,6 +162,9 @@ single 2d ``wired::array`` with no column labels.
                              wired::array<wired::fixed<4>, wired::fixed<5>, wired::fixed<7>>,
                              wired::array<wired::fixed<7>, wired::fixed<8>, wired::fixed<9>>>;
    }
+
+Full Usage
+``````````
 
 .. code-block::
 
