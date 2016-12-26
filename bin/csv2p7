@@ -23,11 +23,30 @@ _header = dedent(
 assign = 'using {} = wired::array<'.format
 
 
+def _to_wired(value, fbits, fbits_format):
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise ValueError(
+            'only int or fixed-point data may be stored in a p7 file'
+            ' got: {!r}'.format(value),
+        ) from e
+
+    int_value = int(value)
+    if value == int_value:
+        return 'wired::from_integral<{}{}>'.format(int_value, fbits_format)
+    return 'wired::fixed<{}{}>'.format(int(value * (1 << fbits)), fbits_format)
+
+
 def format_row(fbits, indent, row, ix):
-    fbits = ', {}'.format(fbits) if fbits is not None else ''
+    if fbits is not None:
+        fbits_format = ', {}'.format(fbits)
+    else:
+        fbits_format = ''
+        fbits = 16
     return '{}wired::array<{}>'.format(
         '' if ix == 0 else ',\n{}'.format(indent),
-        ', '.join('wired::fixed<{}{}>'.format(elem, fbits) for elem in row),
+        ', '.join(_to_wired(elem, fbits, fbits_format) for elem in row),
     )
 
 
@@ -93,10 +112,8 @@ def csv_rows(src):
     sniffer = csv.Sniffer()
     sample = src.read(1024)
     src.seek(0)
-    dialect = sniffer.sniff(sample)
-    has_header = sniffer.has_header(sample)
-    rows = csv.reader(src, dialect=dialect)
-    if has_header:
+    rows = csv.reader(src, dialect=sniffer.sniff(sample))
+    if sniffer.has_header(sample):
         next(rows)
     return rows
 

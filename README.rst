@@ -146,9 +146,10 @@ Example
 
    $ cat etc/test.csv
    a,b,c
-   1,2,3
-   4,5,7
-   7,8,9
+   1.0,2.0,3.0
+   4.0,5.0,7.0
+   7.0,8.0,9.0
+   1.5,2.5,3.5
    $ bin/csv2p7 data etc/test.csv
 
 .. code-block:: c++
@@ -159,9 +160,10 @@ Example
    #include <wired/scalar.h>
 
    namespace protocol7 {
-   using data = wired::array<wired::array<wired::fixed<1>, wired::fixed<2>, wired::fixed<3>>,
-                             wired::array<wired::fixed<4>, wired::fixed<5>, wired::fixed<7>>,
-                             wired::array<wired::fixed<7>, wired::fixed<8>, wired::fixed<9>>>;
+   using data = wired::array<wired::array<wired::from_integral<1>, wired::from_integral<2>, wired::from_integral<3>>,
+                             wired::array<wired::from_integral<4>, wired::from_integral<5>, wired::from_integral<7>>,
+                             wired::array<wired::from_integral<7>, wired::from_integral<8>, wired::from_integral<9>>,
+                             wired::array<wired::fixed<98304>, wired::fixed<163840>, wired::fixed<229376>>>;
    }
 
 Full Usage
