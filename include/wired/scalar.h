@@ -4,8 +4,6 @@
 #include <type_traits>
 #include <ratio>
 
-#include "wired/utils.h"
-
 namespace wired {
 template<std::uint8_t fbits, std::int32_t data>
 struct fixed {
@@ -13,7 +11,7 @@ struct fixed {
 
     constexpr static std::int32_t rawdata = data;
 
-    static double as_double() {
+    constexpr static double materialize() {
         return static_cast<double>(data) / (1 << fbits);
     }
 };

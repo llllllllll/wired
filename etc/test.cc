@@ -1,9 +1,33 @@
 #include <iostream>
+#include <utility>
 
 #include "wired/array.h"
 #include "wired/scalar.h"
 
 static constexpr std::uint8_t base = 16;
+
+namespace {
+template<typename T, std::size_t n>
+std::ostream& operator<<(std::ostream& stream, std::array<T, n> arr) {
+    auto it = arr.cbegin();
+    stream << '{';
+    if (it == arr.cend()) {
+        return stream << '}';
+    }
+    else {
+        stream << *it++;
+    }
+    while (it != arr.cend()) {
+        stream << ", " << *it++;
+    }
+    return stream << '}';
+}
+
+template<std::size_t... ns>
+std::ostream& operator<<(std::ostream& stream, std::index_sequence<ns...>) {
+    return stream << std::array<std::size_t, sizeof...(ns)>{ns...};
+}
+}
 
 int main() {
     // create 2 integral scalars
@@ -18,41 +42,55 @@ int main() {
     using values = wired::array<a, b, c, d>;
 
     // lookup items out of the array
-    std::cout << "values[0]: "
-              << wired::getitem<values, 0>::as_double() << '\n'
-              << "values[1]: "
-              << wired::getitem<values, 1>::as_double() << '\n'
-              << "values[2]: "
-              << wired::getitem<values, 2>::as_double() << '\n'
-              << "values[3]: "
-              << wired::getitem<values, 3>::as_double() << '\n';
+    std::cout << "getitem<values, 0>: "
+              << wired::getitem<values, 0>::materialize() << '\n'
+              << "getitem<values, 1>: "
+              << wired::getitem<values, 1>::materialize() << '\n'
+              << "getitem<values, 2>: "
+              << wired::getitem<values, 2>::materialize() << '\n'
+              << "getitem<values, 3>: "
+              << wired::getitem<values, 3>::materialize() << '\n';
 
 
     // scalar arithmetic
-    std::cout << "a * b: " << wired::mul<a, b>::as_double() << '\n';
+    std::cout << "mul<a, b>: " << wired::mul<a, b>::materialize() << '\n';
 
     // nested expressions
-    std::cout << "(a * b + c) / d: "
-              << wired::div<wired::add<wired::mul<a, b>, c>, d>::as_double()
+    std::cout << "div<add<mul<a, b>, c>, d>: "
+              << wired::div<wired::add<wired::mul<a, b>, c>, d>::materialize()
               << '\n';
 
     // exp
-    std::cout << "exp(b): " << wired::exp<b>::as_double() << '\n';
+    std::cout << "exp<b>: " << wired::exp<b>::materialize() << '\n';
 
     // broadcasted arithmetic
-    std::cout << "values + a:";
-    for (auto d : wired::add<values, a>::as_doubles()) {
-        std::cout << ' ' << d;
-    }
-    std::cout << '\n';
+    std::cout << "add<values, a>: "
+              << wired::add<values, a>::materialize() << '\n';
 
     // reductions
-    std::cout << "sum<values>: " << wired::sum<values>::as_double() << '\n';
+    std::cout << "sum<values>: " << wired::sum<values>::materialize() << '\n';
 
     // arbitrary reduction (could use product, but just for show)
     std::cout << "reduce<sum, values>: "
-              << wired::reduce<wired::mul, values>::as_double()
+              << wired::reduce<wired::mul, values>::materialize()
               << '\n';
+
+    // 2d arrays
+    using arr2d = wired::array<wired::array<a, b>,
+                               wired::array<c, d>>;
+    std::cout << "arr2d: " << arr2d::materialize() << '\n';
+
+    std::cout << "add<arr2d, a>: "
+              << wired::add<arr2d, a>::materialize() << '\n';
+
+    // 2d indexing
+    std::cout << "getitem<arr2d, 0, 1>: "
+              << wired::getitem<arr2d, 0, 1>::materialize() << '\n';
+
+    // check the shape arrays or scalars
+    std::cout << "shape<a>: " << wired::shape<a>{} << '\n';
+    std::cout << "shape<values>: " << wired::shape<values>{} << '\n';
+    std::cout << "shape<arr2d>: " << wired::shape<arr2d>{} << '\n';
 
     return 0;
 }
