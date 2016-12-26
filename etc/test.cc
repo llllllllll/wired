@@ -4,8 +4,6 @@
 #include "wired/array.h"
 #include "wired/scalar.h"
 
-static constexpr std::uint8_t base = 16;
-
 namespace {
 template<typename T, std::size_t n>
 std::ostream& operator<<(std::ostream& stream, std::array<T, n> arr) {
@@ -31,12 +29,12 @@ std::ostream& operator<<(std::ostream& stream, std::index_sequence<ns...>) {
 
 int main() {
     // create 2 integral scalars
-    using a = wired::from_integral<base, 2>;
-    using b = wired::from_integral<base, 5>;
+    using a = wired::from_integral<2>;
+    using b = wired::from_integral<5>;
 
     // create 2 fraction scalars
-    using c = wired::from_ratio<base, std::ratio<1, 2>>;
-    using d = wired::from_ratio<base, std::ratio<3, 2>>;
+    using c = wired::from_ratio<std::ratio<1, 2>>;
+    using d = wired::from_ratio<std::ratio<3, 2>>;
 
     // create an array from our 4 scalars
     using values = wired::array<a, b, c, d>;
@@ -82,6 +80,9 @@ int main() {
 
     std::cout << "add<arr2d, a>: "
               << wired::add<arr2d, a>::materialize() << '\n';
+
+    std::cout << "column_array<a, b>: "
+              << wired::column_array<a, b>::materialize() << '\n';
 
     // 2d indexing
     std::cout << "getitem<arr2d, 0, 1>: "

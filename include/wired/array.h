@@ -80,6 +80,9 @@ struct array<V, Vs...>  {
     }
 };
 
+template<typename... Vs>
+using column_array = array<array<Vs>...>;
+
 namespace dispatch {
 template<typename T, std::size_t... ns>
 struct getitem {};

@@ -5,7 +5,9 @@
 #include <ratio>
 
 namespace wired {
-template<std::uint8_t fbits, std::int32_t data>
+constexpr std::uint8_t default_fbits = 16;
+
+template<std::int32_t data, std::uint8_t fbits = default_fbits>
 struct fixed {
     static_assert(fbits <= 31, "fbits is too large");
 
@@ -16,7 +18,7 @@ struct fixed {
     }
 };
 
-template<std::uint8_t fbits, std::int64_t value>
+template<std::int64_t value, std::uint8_t fbits = default_fbits>
 using from_integral = fixed<fbits, value << fbits>;
 
 namespace dispatch {
@@ -24,17 +26,17 @@ namespace dispatch {
 template<typename T, typename U>
 struct add {};
 
-template<std::uint8_t fbits, std::int32_t lhs, std::int32_t rhs>
-struct add<fixed<fbits, lhs>, fixed<fbits, rhs>> {
-    typedef fixed<fbits, lhs + rhs> type;
+template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
+struct add<fixed<lhs, fbits>, fixed<rhs, fbits>> {
+    typedef fixed<lhs + rhs, fbits> type;
 };
 
 template<typename T, typename U>
 struct sub {};
 
-template<std::uint8_t fbits, std::int32_t lhs, std::int32_t rhs>
-struct sub<fixed<fbits, lhs>, fixed<fbits, rhs>> {
-    typedef fixed<fbits, lhs + rhs> type;
+template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
+struct sub<fixed<lhs, fbits>, fixed<rhs, fbits>> {
+    typedef fixed<lhs - rhs, fbits> type;
 };
 
 template<typename T, typename U>
@@ -45,9 +47,9 @@ constexpr std::int32_t mul_f(std::int32_t lhs, std::int32_t rhs) {
     return (static_cast<std::int64_t>(lhs) * rhs) >> fbits;
 }
 
-template<std::uint8_t fbits, std::int32_t lhs, std::int32_t rhs>
-struct mul<fixed<fbits, lhs>, fixed<fbits, rhs>> {
-    typedef fixed<fbits, mul_f<fbits>(lhs, rhs)> type;
+template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
+struct mul<fixed<lhs, fbits>, fixed<rhs, fbits>> {
+    typedef fixed<mul_f<fbits>(lhs, rhs), fbits> type;
 };
 
 template<typename T, typename U>
@@ -58,25 +60,25 @@ constexpr std::int32_t div_f(std::int32_t lhs, std::int32_t rhs) {
     return (static_cast<std::int64_t>(lhs) << fbits) / rhs;
 }
 
-template<std::uint8_t fbits, std::int32_t lhs, std::int32_t rhs>
-struct div<fixed<fbits, lhs>, fixed<fbits, rhs>> {
-    typedef fixed<fbits, div_f<fbits>(lhs, rhs)> type;
+template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
+struct div<fixed<lhs, fbits>, fixed<rhs, fbits>> {
+    typedef fixed<div_f<fbits>(lhs, rhs), fbits> type;
 };
 
-template<std::uint8_t fbits, typename T>
+template<typename T, std::uint8_t fbits>
 struct from_ratio {};
 
-template<std::uint8_t fbits, std::intmax_t num, std::intmax_t den>
-struct from_ratio<fbits, std::ratio<num, den>> {
-    typedef typename div<from_integral<fbits, num>,
-                         from_integral<fbits, den>>::type type;
+template<std::intmax_t num, std::intmax_t den, std::uint8_t fbits>
+struct from_ratio<std::ratio<num, den>, fbits> {
+    typedef typename div<from_integral<num, fbits>,
+                         from_integral<den, fbits>>::type type;
 };
 
 template<typename T>
 struct exp {};
 
-template<std::uint8_t fbits, std::int32_t data>
-struct exp<fixed<fbits, data>> {
+template<std::int32_t data, std::uint8_t fbits>
+struct exp<fixed<data, fbits>> {
 private:
     constexpr static std::int32_t compute() {
         bool neg = data < 0;
@@ -120,8 +122,8 @@ using mul = typename dispatch::mul<T, U>::type;
 template<typename T, typename U>
 using div = typename dispatch::div<T, U>::type;
 
-template<std::uint8_t fbits, typename T>
-using from_ratio = typename dispatch::from_ratio<fbits, T>::type;
+template<typename T, std::uint8_t fbits = default_fbits>
+using from_ratio = typename dispatch::from_ratio<T, fbits>::type;
 
 template<typename T>
 using exp = typename dispatch::exp<T>::type;
