@@ -75,7 +75,7 @@ struct array<V, Vs...>  {
     constexpr static std::enable_if_t<
         (... && utils::index_sequence_eq<shape<V>, shape<Vs>>),
         utils::shape_to_array_type<shape<array<V, Vs...>>>>
-        materialize() {
+    materialize() {
         return {V::materialize(), Vs::materialize()...};
     }
 };
