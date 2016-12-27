@@ -126,7 +126,7 @@ def main(argv):
     args = parse_args(argv)
 
     if not isidentifier(args.name):
-        error('--name={} is not a valid C++ identifier'.format(args.name))
+        error('{} is not a valid C++ identifier'.format(args.name))
 
     if not isidentifier(args.namespace):
         error(
