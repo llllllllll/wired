@@ -110,71 +110,6 @@ struct getitem<array<Vs...>, n, ns...> {
                              ns...>::type type;
 };
 
-template<typename... Vs, typename U>
-struct add<array<Vs...>, U> {
-    typedef array<wired::add<Vs, U>...> type;
-};
-
-template<typename U, typename... Vs>
-struct add<U, array<Vs...>> {
-    typedef array<wired::add<U, Vs>...> type;
-};
-
-template<typename... Vs, typename ...Us>
-struct add<array<Vs...>, array<Us...>> {
-    typedef array<wired::add<Vs, Us>...> type;
-};
-
-template<typename... Vs, typename U>
-struct sub<array<Vs...>, U> {
-    typedef array<wired::sub<Vs, U>...> type;
-};
-
-template<typename U, typename... Vs>
-struct sub<U, array<Vs...>> {
-    typedef array<wired::sub<U, Vs>...> type;
-};
-
-template<typename... Vs, typename ...Us>
-struct sub<array<Vs...>, array<Us...>> {
-    typedef array<wired::sub<Vs, Us>...> type;
-};
-
-template<typename... Vs, typename U>
-struct mul<array<Vs...>, U> {
-    typedef array<wired::mul<Vs, U>...> type;
-};
-
-template<typename U, typename... Vs>
-struct mul<U, array<Vs...>> {
-    typedef array<wired::mul<U, Vs>...> type;
-};
-
-template<typename... Vs, typename ...Us>
-struct mul<array<Vs...>, array<Us...>> {
-    typedef array<wired::mul<Vs, Us>...> type;
-};
-
-template<typename... Vs, typename U>
-struct div<array<Vs...>, U> {
-    typedef array<wired::div<Vs, U>...> type;
-};
-
-template<typename U, typename... Vs>
-struct div<U, array<Vs...>> {
-    typedef array<wired::div<U, Vs>...> type;
-};
-
-template<typename... Vs, typename ...Us>
-struct div<array<Vs...>, array<Us...>> {
-    typedef array<wired::div<Vs, Us>...> type;
-};
-
-template<typename... Vs>
-struct exp<array<Vs...>> {
-    typedef array<wired::exp<Vs>...> type;
-};
-
 template<template<typename A, typename B> typename Op, typename Vs>
 struct reduce {};
 
@@ -202,4 +137,33 @@ using sum = reduce<add, T>;
 
 template<typename T>
 using product = reduce<mul, T>;
+
+namespace dispatch {
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         typename... Vs,
+         typename U>
+struct binop<op, array<Vs...>, U> {
+    typedef array<typename binop<op, Vs, U>::type...> type;
+};
+
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         typename... Vs,
+         typename... Us>
+struct binop<op, array<Vs...>, array<Us...>> {
+    typedef array<typename binop<op, Vs, Us>::type...> type;
+};
+
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         typename V,
+         typename... Us>
+struct binop<op, V, array<Us...>> {
+    typedef array<typename binop<op, V, Us>::type...> type;
+};
+
+template<std::int32_t op(std::int32_t, std::uint8_t),
+         typename... Vs>
+struct unop<op, array<Vs...>> {
+    typedef array<typename unop<op, Vs>::type...> type;
+};
+}
 }

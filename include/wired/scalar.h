@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <ratio>
 
+#include "wired/op.h"
+
 namespace wired {
 constexpr std::uint8_t default_fbits = 16;
 
@@ -19,112 +21,66 @@ struct fixed {
 };
 
 template<std::int64_t value, std::uint8_t fbits = default_fbits>
-using from_integral = fixed<fbits, value << fbits>;
+using from_integral = fixed<value << fbits, fbits>;
 
 namespace dispatch {
-
-template<typename T, typename U>
-struct add {};
-
-template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
-struct add<fixed<lhs, fbits>, fixed<rhs, fbits>> {
-    typedef fixed<lhs + rhs, fbits> type;
-};
-
-template<typename T, typename U>
-struct sub {};
-
-template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
-struct sub<fixed<lhs, fbits>, fixed<rhs, fbits>> {
-    typedef fixed<lhs - rhs, fbits> type;
-};
-
-template<typename T, typename U>
-struct mul {};
-
-template<std::uint8_t fbits>
-constexpr std::int32_t mul_f(std::int32_t lhs, std::int32_t rhs) {
-    return (static_cast<std::int64_t>(lhs) * rhs) >> fbits;
-}
-
-template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
-struct mul<fixed<lhs, fbits>, fixed<rhs, fbits>> {
-    typedef fixed<mul_f<fbits>(lhs, rhs), fbits> type;
-};
-
-template<typename T, typename U>
-struct div {};
-
-template<std::uint8_t fbits>
-constexpr std::int32_t div_f(std::int32_t lhs, std::int32_t rhs) {
-    return (static_cast<std::int64_t>(lhs) << fbits) / rhs;
-}
-
-template<std::int32_t lhs, std::int32_t rhs, std::uint8_t fbits>
-struct div<fixed<lhs, fbits>, fixed<rhs, fbits>> {
-    typedef fixed<div_f<fbits>(lhs, rhs), fbits> type;
-};
-
 template<typename T, std::uint8_t fbits>
 struct from_ratio {};
 
 template<std::intmax_t num, std::intmax_t den, std::uint8_t fbits>
 struct from_ratio<std::ratio<num, den>, fbits> {
-    typedef typename div<from_integral<num, fbits>,
-                         from_integral<den, fbits>>::type type;
-};
-
-template<typename T>
-struct exp {};
-
-template<std::int32_t data, std::uint8_t fbits>
-struct exp<fixed<data, fbits>> {
-private:
-    constexpr static std::int32_t compute() {
-        bool neg = data < 0;
-        std::int32_t value = data;
-        if (neg) {
-            value = -value;
-        }
-        std::int32_t result = value + (1 << fbits);
-        std::int32_t term = value;
-
-        for (std::uint8_t n = 2; n < 30; ++n) {
-            term = mul_f<fbits>(term, div_f<fbits>(value, n << fbits));
-            result += term;
-
-            if (term < 500 && (n > 15 || term < 20)) {
-                break;
-            }
-        }
-
-        if (neg) {
-            return div_f<fbits>(1 << fbits, result);
-        }
-        else {
-            return result;
-        }
-    }
-public:
-    typedef fixed<fbits, compute()> type;
+    typedef fixed<op::div(from_integral<num, fbits>::rawdata,
+                          from_integral<den, fbits>::rawdata,
+                          fbits), fbits> type;
 };
 }
-
-template<typename T, typename U>
-using add = typename dispatch::add<T, U>::type;
-
-template<typename T, typename U>
-using sub = typename dispatch::sub<T, U>::type;
-
-template<typename T, typename U>
-using mul = typename dispatch::mul<T, U>::type;
-
-template<typename T, typename U>
-using div = typename dispatch::div<T, U>::type;
 
 template<typename T, std::uint8_t fbits = default_fbits>
 using from_ratio = typename dispatch::from_ratio<T, fbits>::type;
 
+namespace dispatch {
+template<std::int32_t op(std::int32_t, std::uint8_t), typename value>
+struct unop {};
+
+template<std::int32_t op(std::int32_t, std::uint8_t),
+         std::int32_t value,
+         std::uint8_t fbits>
+struct unop<op, fixed<value, fbits>> {
+    typedef fixed<op(value, fbits), fbits> type;
+};
+
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         typename lhs,
+         typename rhs>
+struct binop {};
+
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         std::int32_t lhs,
+         std::int32_t rhs,
+         std::uint8_t fbits>
+struct binop<op, fixed<lhs, fbits>, fixed<rhs, fbits>> {
+    typedef fixed<op(lhs, rhs, fbits), fbits> type;
+};
+}
+
+template<typename T, typename U>
+using add = typename dispatch::binop<op::add, T, U>::type;
+
+template<typename T, typename U>
+using sub = typename dispatch::binop<op::sub, T, U>::type;
+
+template<typename T, typename U>
+using mul = typename dispatch::binop<op::mul, T, U>::type;
+
+template<typename T, typename U>
+using div = typename dispatch::binop<op::div, T, U>::type;
+
 template<typename T>
-using exp = typename dispatch::exp<T>::type;
+using exp = typename dispatch::unop<op::exp, T>::type;
+
+template<typename T>
+using neg = typename dispatch::unop<op::neg, T>::type;
+
+template<typename T>
+using inv = typename dispatch::unop<op::inv, T>::type;
 }

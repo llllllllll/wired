@@ -111,20 +111,20 @@ Example
 .. code-block::
 
    $ ./a.out
-   getitem<values, 0>: 16
-   getitem<values, 1>: 16
-   getitem<values, 2>: 1
-   getitem<values, 3>: 1
-   mul<a, b>: 256
-   div<add<mul<a, b>, c>, d>: 257
-   exp<b>: 0
-   add<values, a>: {32, 32, 17, 17}
-   sum<values>: 34
-   reduce<sum, values>: 256
-   arr2d: {{16, 16}, {1, 1}}
-   add<arr2d, a>: {{32, 32}, {17, 17}}
-   column_array<a, b>: {{16}, {16}}
-   getitem<arr2d, 0, 1>: 16
+   getitem<values, 0>: 2
+   getitem<values, 1>: 5
+   getitem<values, 2>: 0.5
+   getitem<values, 3>: 1.5
+   mul<a, b>: 10
+   div<add<mul<a, b>, c>, d>: 7
+   exp<b>: 148.408
+   add<values, a>: {4, 7, 2.5, 3.5}
+   sum<values>: 9
+   reduce<sum, values>: 7.5
+   arr2d: {{2, 5}, {0.5, 1.5}}
+   add<arr2d, a>: {{4, 7}, {2.5, 3.5}}
+   column_array<a, b>: {{2}, {5}}
+   getitem<arr2d, 0, 1>: 5
    shape<a>: {}
    shape<values>: {4}
    shape<arr2d>: {2, 2}
