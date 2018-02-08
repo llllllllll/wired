@@ -87,6 +87,8 @@ int main() {
     // 2d indexing
     std::cout << "getitem<arr2d, 0, 1>: "
               << wired::getitem<arr2d, 0, 1>::materialize() << '\n';
+    std::cout << "getitem<arr2d, 0>: "
+              << wired::getitem<arr2d, 0>::materialize() << '\n';
 
     // check the shape arrays or scalars
     std::cout << "shape<a>: " << wired::shape<a>{} << '\n';

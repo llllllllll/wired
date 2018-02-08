@@ -99,6 +99,8 @@ Example
        // 2d indexing
        std::cout << "getitem<arr2d, 0, 1>: "
                  << wired::getitem<arr2d, 0, 1>::materialize() << '\n';
+       std::cout << "getitem<arr2d, 0>: "
+                 << wired::getitem<arr2d, 0>::materialize() << '\n';
 
        // check the shape arrays or scalars
        std::cout << "shape<a>: " << wired::shape<a>{} << '\n';
@@ -138,6 +140,7 @@ Example
    add<arr2d, a>: {{4, 7}, {2.5, 3.5}}
    column_array<a, b>: {{2}, {5}}
    getitem<arr2d, 0, 1>: 5
+   getitem<arr2d, 0>: {2, 5}
    shape<a>: {}
    shape<values>: {4}
    shape<arr2d>: {2, 2}
