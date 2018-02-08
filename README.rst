@@ -105,6 +105,19 @@ Example
        std::cout << "shape<values>: " << wired::shape<values>{} << '\n';
        std::cout << "shape<arr2d>: " << wired::shape<arr2d>{} << '\n';
 
+       using row = wired::array<a, b>;
+       using column = wired::column_array<c, d>;
+       std::cout << "row: " << row::materialize() << '\n';
+       std::cout << "column: " << column::materialize() << '\n';
+
+       // check the number of dimensions
+       std::cout << "ndim<row>: " << wired::ndim<row>;
+       std::cout << "ndim<column>: " << wired::ndim<column> << '\n';
+
+       // broadcasted arithmetic to expand dimensions
+       std::cout << "add<row, column>: "
+                 << wired::add<row, column>::materialize() << '\n';
+
        return 0;
    }
 
@@ -128,6 +141,10 @@ Example
    shape<a>: {}
    shape<values>: {4}
    shape<arr2d>: {2, 2}
+   row: {2, 5}
+   column: {{0.5}, {1.5}}
+   ndim<row>: 1ndim<column>: 2
+   add<row, column>: {{2.5, 5.5}, {3.5, 6.5}}
 
 ``protocol7``
 -------------
