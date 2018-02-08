@@ -2,9 +2,7 @@
 
 #include <cstdint>
 
-namespace wired {
-namespace op {
-
+namespace wired::op {
 constexpr std::int32_t add(std::int32_t lhs,
                            std::int32_t rhs,
                            std::uint8_t) {
@@ -61,5 +59,4 @@ constexpr std::int32_t neg(std::int32_t data, std::uint8_t) {
 constexpr std::int32_t inv(std::int32_t data, std::uint8_t) {
     return ~data;
 }
-}
-}
+}  // namespace wired::op

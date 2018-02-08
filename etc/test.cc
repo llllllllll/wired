@@ -93,5 +93,18 @@ int main() {
     std::cout << "shape<values>: " << wired::shape<values>{} << '\n';
     std::cout << "shape<arr2d>: " << wired::shape<arr2d>{} << '\n';
 
+    using row = wired::array<a, b>;
+    using column = wired::column_array<c, d>;
+    std::cout << "row: " << row::materialize() << '\n';
+    std::cout << "column: " << column::materialize() << '\n';
+
+    // check the number of dimensions
+    std::cout << "ndim<row>: " << wired::ndim<row>;
+    std::cout << "ndim<column>: " << wired::ndim<column> << '\n';
+
+    // broadcasted arithmetic to expand dimensions
+    std::cout << "add<row, column>: "
+              << wired::add<row, column>::materialize() << '\n';
+
     return 0;
 }
