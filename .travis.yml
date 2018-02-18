@@ -16,8 +16,8 @@ install:
   - pip install pytest flake8
 
 script:
-  - make test
-  - CXX=g++-7 make style-check
+  - CXX=g++-7 make test
+  - make style-check
 
 notifications:
   email: false
