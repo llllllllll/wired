@@ -1,3 +1,6 @@
+CC ?= gcc
+CXX ?= g++
+
 INCLUDE_DIRS := include/
 INCLUDE := $(foreach d,$(INCLUDE_DIRS), -I$d)
 DFILES := layer9-example/predict.d
