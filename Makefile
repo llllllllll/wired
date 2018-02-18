@@ -1,6 +1,6 @@
 INCLUDE_DIRS := include/
 INCLUDE := $(foreach d,$(INCLUDE_DIRS), -I$d)
-DFILES := etc/test.d layer9-example/predict.d
+DFILES := layer9-example/predict.d
 CXXFLAGS := -std=gnu++17
 
 .PHONY: all
@@ -22,6 +22,6 @@ layer9-example/predict: layer9-example/main.cc layer9-example/samples.p7 layer9-
 
 .PHONY: clean
 clean:
-	@rm etc/test etc/test.d layer9-example/*.p7 layer9-example/predict
+	@rm layer9-example/*.p7 layer9-example/predict
 
 -include $(DFILES)
