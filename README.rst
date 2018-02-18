@@ -23,7 +23,7 @@ Encoding Values
 
 Wired works by lifting all values into C++ types. For example, we would encode
 the value ``1.0`` as ``wired::from_integral<1>`` which expands to the type:
-``wired::fixed<65536, 0>``.
+``wired::fixed<65536, 16>``.
 
 We encode arrays as a variadic template, it looks something like:
 
