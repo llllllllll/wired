@@ -32,8 +32,8 @@ struct fixed {
     @tparam value The integral value to convert.
     @tparam fbits The number of bits to the left of the radix point.
  */
-template<std::int64_t value, std::uint8_t fbits = default_fbits>
-using from_integral = fixed<value << fbits, fbits>;
+template<std::int32_t value, std::uint8_t fbits = default_fbits>
+using from_integral = fixed<static_cast<std::uint32_t>(value) << fbits, fbits>;
 
 namespace dispatch {
 template<typename T, std::uint8_t fbits>
@@ -125,11 +125,4 @@ using exp = typename dispatch::unop<op::exp, T>::type;
  */
 template<typename T>
 using neg = typename dispatch::unop<op::neg, T>::type;
-
-/** Invert `T` with proper broadcasting.
-
-    @tparam T The value to invert.
- */
-template<typename T>
-using inv = typename dispatch::unop<op::inv, T>::type;
 }  // namespace wired

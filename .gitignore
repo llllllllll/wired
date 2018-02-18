@@ -1,16 +1,24 @@
-# test runner built with `make test`
-test/run
-
 # doc artifacts
 html/*
 
 # scratch file for testing linking
 scratch.cc
+
+# compiled artifacts
+a.out
 *.o
 *.a
 *.so*
 *.d
+*.pyc
 
-etc/test
-etc/test.s
-a.out
+# example protocol7 files
+*.p7
+
+# example binary
+layer9-example/predict
+
+.gdb_history
+
+.pytest_cache/*
+psyche/psyche.egg-info/*

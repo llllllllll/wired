@@ -45,7 +45,7 @@ namespace detail {
 template<typename A, typename B>
 using bin_cat_index_sequence =
     typename dispatch::bin_cat_index_sequence<A, B>::type;
-}
+}  // namespace detail
 
 /** Concatenate a sequence of index sequences.
 
@@ -53,6 +53,59 @@ using bin_cat_index_sequence =
  */
 template<typename... Ixs>
 using cat_index_sequences = reduce<detail::bin_cat_index_sequence, Ixs...>;
+
+namespace dispatch {
+namespace detail {
+template<std::size_t n, std::size_t value>
+struct repeat_n {
+    using type = cat_index_sequences<std::index_sequence<value>,
+                                     typename repeat_n<n - 1, value>::type>;
+};
+
+template<std::size_t value>
+struct repeat_n<0, value> {
+    using type = std::index_sequence<>;
+};
+}  // detail
+
+template<std::size_t c, typename I>
+struct repeat_index_sequence;
+
+template<std::size_t c, std::size_t... Ixs>
+struct repeat_index_sequence<c, std::index_sequence<Ixs...>> {
+    using type = cat_index_sequences<typename detail::repeat_n<c, Ixs>::type...>;
+};
+}  // dispatch
+
+/** Repeat each element of an index sequence `c` times.
+
+    @tparam c The number of times to repeat each element.
+    @tparam I The index sequence to repeat.
+ */
+template<std::size_t c, typename I>
+using repeat_index_sequence =
+    typename dispatch::repeat_index_sequence<c, I>::type;
+
+namespace dispatch {
+template<std::size_t c, typename I>
+struct tile_index_sequence {
+    using type =
+        cat_index_sequences<I, typename tile_index_sequence<c - 1, I>::type>;
+};
+
+template<typename I>
+struct tile_index_sequence<0, I> {
+    using type = std::index_sequence<>;
+};
+}  // namespace dispatch
+
+/** Tile an index sequence `c` times.
+
+    @tparam c The number of times to tile `I`.
+    @tparam I The index sequence to tile.
+ */
+template<std::size_t c, typename I>
+using tile_index_sequence = typename dispatch::tile_index_sequence<c, I>::type;
 
 /** Convert an index sequence into a `std::array`.
 
@@ -104,14 +157,14 @@ constexpr bool index_sequence_shape_compat =
     dispatch::index_sequence_shape_compat<A, B>::value;
 
 namespace dispatch {
-template<std::size_t n, std::size_t len>
+template<std::size_t len, std::size_t n>
 struct full {
     using type = cat_index_sequences<std::index_sequence<n>,
-                                     typename full<n, len - 1>::type>;
+                                     typename full<len - 1, n>::type>;
 };
 
 template<std::size_t n>
-struct full<n, 0> {
+struct full<0, n> {
     using type = std::index_sequence<>;
 };
 }  // namespace dispatch
@@ -119,11 +172,11 @@ struct full<n, 0> {
 /** Helper for creating an index sequence of length `len` populated with a
     constant value.
 
-    @tparam n The value to populate with.
     @tparam len The length of the new index sequence.
+    @tparam n The value to populate with.
  */
-template<std::size_t n, std::size_t len>
-using full = typename dispatch::full<n, len>::type;
+template<std::size_t len, std::size_t n>
+using full = typename dispatch::full<len, n>::type;
 
 /** Helper for creating an index sequence of length `len` populated with all
     zeros.
@@ -131,7 +184,7 @@ using full = typename dispatch::full<n, len>::type;
     @tparam len The length of the new index sequence.
  */
 template<std::size_t len>
-using zeros = typename dispatch::full<0, len>::type;
+using zeros = full<len, 0>;
 
 /** Helper for creating an index sequence of length `len` populated with all
     ones.
@@ -139,7 +192,7 @@ using zeros = typename dispatch::full<0, len>::type;
     @tparam len The length of the new index sequence.
  */
 template<std::size_t len>
-using ones = typename dispatch::full<1, len>::type;
+using ones = full<len, 0>;
 
 namespace dispatch {
 template<typename Ix, std::size_t n, std::size_t len>
@@ -211,4 +264,10 @@ struct cond<case_<false, V>, Cases...> {
  */
 template<typename... Cases>
 using cond = typename dispatch::cond<Cases...>::type;
+
+template<typename T>
+struct print_type;
+
+template<auto v>
+struct print_value;
 }  // namespace wired::utils

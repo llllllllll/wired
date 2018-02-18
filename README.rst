@@ -1,163 +1,161 @@
 wired
 =====
 
-wip
+Compile time fixed point scalars and n-dimensional arrays for C++17.
 
-compile time fixed point scalars and arrays for C++17
+What?
+-----
 
-Example
--------
+``wired`` is a library which implements n-dimensional arrays similar to `numpy
+<http://www.numpy.org/>`_. We can do arithmetic and some linear algebra
+operations on these arrays.
 
-.. code-block:: c++
+The catch is that the computation is evaluated with the
+**template-expander**. All of the calculations are solved at compile time, so
+the output binaries will only ever include the equivalent of array or scalar
+literals, no computations!
 
-   #include <iostream>
-   #include <utility>
+Method
+------
 
-   #include "wired/array.h"
-   #include "wired/scalar.h"
+Encoding Values
+~~~~~~~~~~~~~~~
 
-   namespace {
-   template<typename T, std::size_t n>
-   std::ostream& operator<<(std::ostream& stream, std::array<T, n> arr) {
-       auto it = arr.cbegin();
-       stream << '{';
-       if (it == arr.cend()) {
-           return stream << '}';
-       }
-       else {
-           stream << *it++;
-       }
-       while (it != arr.cend()) {
-           stream << ", " << *it++;
-       }
-       return stream << '}';
-   }
+Wired works by lifting all values into C++ types. For example, we would encode
+the value ``1.0`` as ``wired::from_integral<1>`` which expands to the type:
+``wired::fixed<65536, 0>``.
 
-   template<std::size_t... ns>
-   std::ostream& operator<<(std::ostream& stream, std::index_sequence<ns...>) {
-       return stream << std::array<std::size_t, sizeof...(ns)>{ns...};
-   }
-   }
-
-   int main() {
-       // create 2 integral scalars
-       using a = wired::from_integral<2>;
-       using b = wired::from_integral<5>;
-
-       // create 2 fraction scalars
-       using c = wired::from_ratio<std::ratio<1, 2>>;
-       using d = wired::from_ratio<std::ratio<3, 2>>;
-
-       // create an array from our 4 scalars
-       using values = wired::array<a, b, c, d>;
-
-       // lookup items out of the array
-       std::cout << "getitem<values, 0>: "
-                 << wired::getitem<values, 0>::materialize() << '\n'
-                 << "getitem<values, 1>: "
-                 << wired::getitem<values, 1>::materialize() << '\n'
-                 << "getitem<values, 2>: "
-                 << wired::getitem<values, 2>::materialize() << '\n'
-                 << "getitem<values, 3>: "
-                 << wired::getitem<values, 3>::materialize() << '\n';
-
-
-       // scalar arithmetic
-       std::cout << "mul<a, b>: " << wired::mul<a, b>::materialize() << '\n';
-
-       // nested expressions
-       std::cout << "div<add<mul<a, b>, c>, d>: "
-                 << wired::div<wired::add<wired::mul<a, b>, c>, d>::materialize()
-                 << '\n';
-
-       // exp
-       std::cout << "exp<b>: " << wired::exp<b>::materialize() << '\n';
-
-       // broadcasted arithmetic
-       std::cout << "add<values, a>: "
-                 << wired::add<values, a>::materialize() << '\n';
-
-       // reductions
-       std::cout << "sum<values>: " << wired::sum<values>::materialize() << '\n';
-
-       // arbitrary reduction (could use product, but just for show)
-       std::cout << "reduce<sum, values>: "
-                 << wired::reduce<wired::mul, values>::materialize()
-                 << '\n';
-
-       // 2d arrays
-       using arr2d = wired::array<wired::array<a, b>,
-                                  wired::array<c, d>>;
-       std::cout << "arr2d: " << arr2d::materialize() << '\n';
-
-       std::cout << "add<arr2d, a>: "
-                 << wired::add<arr2d, a>::materialize() << '\n';
-
-       std::cout << "column_array<a, b>: "
-                 << wired::column_array<a, b>::materialize() << '\n';
-
-       // 2d indexing
-       std::cout << "getitem<arr2d, 0, 1>: "
-                 << wired::getitem<arr2d, 0, 1>::materialize() << '\n';
-       std::cout << "getitem<arr2d, 0>: "
-                 << wired::getitem<arr2d, 0>::materialize() << '\n';
-
-       // check the shape arrays or scalars
-       std::cout << "shape<a>: " << wired::shape<a>{} << '\n';
-       std::cout << "shape<values>: " << wired::shape<values>{} << '\n';
-       std::cout << "shape<arr2d>: " << wired::shape<arr2d>{} << '\n';
-
-       using row = wired::array<a, b>;
-       using column = wired::column_array<c, d>;
-       std::cout << "row: " << row::materialize() << '\n';
-       std::cout << "column: " << column::materialize() << '\n';
-
-       // check the number of dimensions
-       std::cout << "ndim<row>: " << wired::ndim<row>;
-       std::cout << "ndim<column>: " << wired::ndim<column> << '\n';
-
-       // broadcasted arithmetic to expand dimensions
-       std::cout << "add<row, column>: "
-                 << wired::add<row, column>::materialize() << '\n';
-
-       return 0;
-   }
+We encode arrays as a variadic template, it looks something like:
 
 .. code-block::
 
-   $ ./a.out
-   getitem<values, 0>: 2
-   getitem<values, 1>: 5
-   getitem<values, 2>: 0.5
-   getitem<values, 3>: 1.5
-   mul<a, b>: 10
-   div<add<mul<a, b>, c>, d>: 7
-   exp<b>: 148.408
-   add<values, a>: {4, 7, 2.5, 3.5}
-   sum<values>: 9
-   reduce<sum, values>: 7.5
-   arr2d: {{2, 5}, {0.5, 1.5}}
-   add<arr2d, a>: {{4, 7}, {2.5, 3.5}}
-   column_array<a, b>: {{2}, {5}}
-   getitem<arr2d, 0, 1>: 5
-   getitem<arr2d, 0>: {2, 5}
-   shape<a>: {}
-   shape<values>: {4}
-   shape<arr2d>: {2, 2}
-   row: {2, 5}
-   column: {{0.5}, {1.5}}
-   ndim<row>: 1ndim<column>: 2
-   add<row, column>: {{2.5, 5.5}, {3.5, 6.5}}
+   /** An n-dimensional array of wired::fixed values.
+
+       @tparam Vs Axis 0 of the array.
+    */
+   template<typename... Vs>
+   struct array;
+
+Note that ``Vs...`` is only axis 0, so 2d arrays are just arrays of arrays, 3d
+arrays are arrays of arrays of arrays, and so on.
+
+Given that we use variadic templates to hold the values, the name ``array`` is a
+lie, it is really more like a singly linked list.
+
+Note: ``wired`` does C++ values if they are acceptable for use as template
+arguments. For example ``wired::ndim`` (return the rank of an object) will
+expand to a ``std::size_t`` because that may be used as a template argument.
+
+Fixed?
+~~~~~~
+
+``double`` is not actually a valid template argument type.
+
+.. code-block::
+
+   $ g++ a.cc
+   a.cc:1:17: error: ‘double’ is not a valid type for a template non-type parameter
+    template<double v>
+
+This poses a problem for a library that wants to encode all of its values as C++
+types. To get around this, ``wired`` uses fixed-point binary values with a
+variable radix point, called ``fbits``.
+
+For more information of fixed-point arithmetic, see `the wikipedia article
+<https://en.wikipedia.org/wiki/Fixed-point_arithmetic>`_.
+
+Note: This means that, for some operations, ``wired`` can have very different
+precision than you would expect. This can either be much more precise, or much
+less precise. This also means that we cannot take advantage of builtins like
+``exp``, so we must approximate these functions without the help of our
+hardware.
+
+Encoding Functions
+~~~~~~~~~~~~~~~~~~
+
+If C++ types are our values, then templated-using clauses are our (eager)
+functions! For example, calling ``add`` looks like:
+
+.. code-block:: c++
+
+   using result = wired::add<a, b>;
+
+and the definition of add looks like:
+
+.. code-block:: c++
+
+   /** Add two objects together with proper broadcasting.
+
+       @tparam T The left hand side of the expression.
+       @tparam U The right hand side of the expression.
+    */
+   template<typename T, typename U>
+   using add = typename dispatch::binop<op::add, T, U>::type;
+
+We can also use templated-structs to represent lazy functions, for example:
+
+.. code-block:: c++
+
+   template<typename T>
+   struct lazy_function {
+       using type = /* some template expression that expands to a type */;;
+   };
+
+To create a closure, we would "call" the template like:
+
+.. code-block:: c++
+
+   using closure = lazy_function<T>;
+
+To actually enter the closure, we need to request the type field, like:
+
+.. code-block:: c++
+
+   /* we need to use the ``typename`` keyword because ``closure`` is a
+    dependent scope, meaning we don't know if ``::type`` is a C++ type or C++
+    value until we enter the closure (expand the template) */
+   using result = typename closure::type;
+
+
+Getting back to C++ values
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``wired::fixed`` and ``wired::array`` both implement a ``constexpr static auto
+materialize()``. For scalars, this returns a ``double``. For arrays, this
+returns a ``std::array`` of the result of materializing all elements along
+axis 0.
+
+Arrays have the extra constraint that they may only be materialized if they are
+not jagged, meaning all arrays on a given axis must be the same size. In general
+``wired`` assumes non-jagged arrays.
+
+
+``layer9``
+----------
+
+You've made it this far, so you are likely already sold on this idea. For those
+who are still skeptical, I have written a demo program that shows the use of
+``wired``.
+
+The demo is a machine learning framework called ``layer9`` which trains a simple
+perception using nothing but ``wired::array`` and ``wired::fixed`` at compile
+time. The result is that we can create a ``predict`` function which has the
+final weights vector as a ``constexpr std::array``.
+
+See the ``layer9-example`` directory for a fully working example of how this
+works.
+
 
 ``protocol7``
 -------------
 
 ``wired`` also comes with utilities for reading and writing data files in a
-custom format called ``protocol7``. A ``protocol7`` file is a valid C++17
-header file which defines a namespace holding some number of
+custom format called ``protocol7``. A ``protocol7`` file is a valid C++17 header
+file which defines a namespace holding some number of
 ``wired::array``\s. ``wired`` comes with a utility, ``csv2p7`` to generate a
 ``protocol7`` file from a csv. The resulting ``protocol7`` file contains a
-single 2d ``wired::array`` with no column labels.
+single 2d ``wired::array``. ``csv2p7`` is very useful to encode data to pass to
+``layer9``.
 
 Example
 ```````
@@ -165,7 +163,6 @@ Example
 .. code-block::
 
    $ cat etc/test.csv
-   a,b,c
    1.0,2.0,3.0
    4.0,5.0,7.0
    7.0,8.0,9.0
@@ -211,3 +208,44 @@ Full Usage
                            The namespace to put the wired::array in.
      --fbits UINT8         The number of bits to the right of the decimal in the
                            resulting wired::fixed types.
+
+
+``psyche``
+----------
+
+Our benchmark for correctness is the ``numpy`` Python library. In order to
+facilitate comparing ``wired`` programs with ``numpy`` programs, ``wired`` comes
+with a Python library called ``psyche`` which provides a Python DSL which can be
+compiled into a ``wired`` witness, or evaluated with ``numpy`` directly. This
+allows us to write tests in a unified way without worrying about manual
+translation errors.
+
+For example:
+
+.. code-block:: python
+
+   In [1]: import psyche as ps
+
+   In [2]: a = ps.Expr([1, 2, 3])
+
+   In [3]: b = ps.Expr([[-1], [-2], [-3]])
+
+   In [4]: expr = (a * b).T
+
+   In [5]: expr
+   Out[5]: Expr(T(Mul(Literal(array([1., 2., 3.])), Literal(array([[-1.], [-2.], [-3.]])))))
+
+   In [6]: ps.evaluate_numpy(expr)
+   Out[6]:
+   array([[-1., -2., -3.],
+          [-2., -4., -6.],
+          [-3., -6., -9.]])
+
+   In [7]: ps.evaluate_wired(expr, include_dir='include/')
+   Out[7]:
+   array([[-1., -2., -3.],
+          [-2., -4., -6.],
+          [-3., -6., -9.]])
+
+
+The ``wired`` test suite is written in terms of ``psyche``

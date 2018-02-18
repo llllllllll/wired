@@ -24,7 +24,8 @@ constexpr std::int32_t mul(std::int32_t lhs,
 constexpr std::int32_t div(std::int32_t lhs,
                            std::int32_t rhs,
                            std::uint8_t fbits) {
-    return (static_cast<std::int64_t>(lhs) << fbits) / rhs;
+    auto l = static_cast<std::int64_t>(static_cast<std::uint64_t>(lhs) << fbits);
+    return l / rhs;
 }
 
 constexpr std::int32_t exp(std::int32_t data, std::uint8_t fbits) {
@@ -54,9 +55,5 @@ constexpr std::int32_t exp(std::int32_t data, std::uint8_t fbits) {
 
 constexpr std::int32_t neg(std::int32_t data, std::uint8_t) {
     return -data;
-}
-
-constexpr std::int32_t inv(std::int32_t data, std::uint8_t) {
-    return ~data;
 }
 }  // namespace wired::op

@@ -109,13 +109,7 @@ def open_output(name):
 
 
 def csv_rows(src):
-    sniffer = csv.Sniffer()
-    sample = src.read(1024)
-    src.seek(0)
-    rows = csv.reader(src, dialect=sniffer.sniff(sample))
-    if sniffer.has_header(sample):
-        next(rows)
-    return rows
+    return csv.reader(src, delimiter=',')
 
 
 def main(argv):

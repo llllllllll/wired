@@ -1,22 +1,27 @@
 INCLUDE_DIRS := include/
 INCLUDE := $(foreach d,$(INCLUDE_DIRS), -I$d)
-DFILES := etc/test.d
+DFILES := etc/test.d layer9-example/predict.d
 CXXFLAGS := -std=gnu++17
 
-.PHONY: all test clean
+.PHONY: all
+all: test
 
-all: etc/test
+.PHONY: test
+test:
+	WIRED_INCLUDE_PATH=include/ py.test
 
-test: etc/test
-	./etc/test
+.PHONY: style-check
+style-check:
+	@flake8
 
-etc/test: etc/test.cc
-	@$(CXX) $(CXXFLAGS) $(INCLUDE) -MD $< -o etc/test
+layer9-example/%.p7: layer9-example/%.csv
+	@bin/csv2p7 $(shell basename $< .csv) $< -o $@
 
-README.rst: etc/build-readme etc/test.cc etc/test bin/csv2p7 etc/test.csv
-	@$^ > $@
+layer9-example/predict: layer9-example/main.cc layer9-example/samples.p7 layer9-example/observations.p7
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -MD $< -o $@
 
+.PHONY: clean
 clean:
-	rm etc/test etc/test.d
+	@rm etc/test etc/test.d layer9-example/*.p7 layer9-example/predict
 
 -include $(DFILES)

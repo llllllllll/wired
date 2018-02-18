@@ -86,6 +86,17 @@ using shape_to_array_type = typename dispatch::shape_to_array_type<I>::type;
 template<typename V>
 constexpr std::size_t ndim = shape<V>::size();
 
+/** The size of an object. This is 0 for scalars, otherwise it is the length
+    of the first axis.
+
+    @tparam V The object to get the size of.
+ */
+template<typename V>
+constexpr std::size_t size = 0;
+
+template<typename... Vs>
+constexpr std::size_t size<array<Vs...>> = sizeof...(Vs);
+
 template<typename... Vs>
 struct array {
     /** Materialize an array of scalars.
@@ -233,6 +244,297 @@ template<typename A, typename B>
 using align_dimensions = typename dispatch::align_dimensions<A, B>::type;
 
 namespace dispatch {
+template<typename A, typename B>
+struct bin_concat;
+
+template<typename... Vs, typename... Us>
+struct bin_concat<array<Vs...>, array<Us...>> {
+    using type = array<Vs..., Us...>;
+};
+}  // namespace dispatch
+
+namespace detail {
+template<typename A, typename B>
+using bin_concat = typename dispatch::bin_concat<A, B>::type;
+}  // namespace detail
+
+
+/** Concatenate a sequence of arrays along axis 0.
+
+    @tparam As The arrays to concatenate.
+ */
+template<typename... As>
+using concat = utils::reduce<detail::bin_concat, As...>;
+
+namespace dispatch {
+template<std::size_t len, typename V>
+struct full {
+    using type = detail::bin_concat<wired::array<V>,
+                                    typename full<len - 1, V>::type>;
+};
+
+/** Helper for creating an array of length `len` populated with a constant
+    value.
+
+    @tparam len The length of the new array.
+    @tparam V The value to populate with.
+ */
+template<typename V>
+struct full<0, V> {
+    using type = wired::array<>;
+};
+}  // namespace dispatch
+
+/** Create an array filled with a single value.
+
+    @tparam len The length of the array to create.
+    @tparam V The value to initialize the array with.
+ */
+template<std::size_t len, typename V>
+using full = typename dispatch::full<len, V>::type;
+
+/** Helper for creating an array of length `len` populated with all zeros.
+
+    @tparam len The length of the new array.
+ */
+template<std::size_t len>
+using zeros = full<len, wired::from_integral<0>>;
+
+/** Helper for creating an array of length `len` populated with all ones.
+
+    @tparam len The length of the new array.
+ */
+template<std::size_t len>
+using ones = full<len, wired::from_integral<1>>;
+
+namespace dispatch {
+template<std::size_t ix, typename A>
+struct split;
+
+template<std::size_t ix, typename V, typename... Vs>
+struct split<ix, array<V, Vs...>> {
+private:
+    using rec = split<ix - 1, array<Vs...>>;
+
+public:
+    using type =
+        std::pair<wired::concat<array<V>, typename rec::type::first_type>,
+                  typename rec::type::second_type>;
+};
+
+template<typename V, typename... Vs>
+struct split<0, array<V, Vs...>> {
+private:
+    using rec = split<0, array<Vs...>>;
+
+public:
+    using type =
+        std::pair<typename rec::type::first_type,
+                  wired::concat<array<V>, typename rec::type::second_type>>;
+};
+
+template<std::size_t ix>
+struct split<ix, array<>> {
+    using type = std::pair<array<>, array<>>;
+};
+}  // namespace dispatch
+
+/** Split an array into two parts along axis 0.
+
+    @tparam ix The pivot point.
+    @tparam A The array to split.
+ */
+template<std::size_t ix, typename A>
+using split = typename dispatch::split<ix, A>::type;
+
+namespace dispatch {
+namespace detail {
+template<std::size_t n, typename V>
+struct repeat_n {
+    using type = concat<array<V>, typename repeat_n<n - 1, V>::type>;
+};
+
+template<typename V>
+struct repeat_n<0, V> {
+    using type = array<>;
+};
+}  // detail
+
+template<std::size_t c, typename I>
+struct repeat;
+
+template<std::size_t c, typename... Vs>
+struct repeat<c, array<Vs...>> {
+    using type = concat<typename detail::repeat_n<c, Vs>::type...>;
+};
+}  // dispatch
+
+/** Repeat each element of an array `c` times.
+
+    @tparam c The number of times to repeat each element.
+    @tparam A The array to repeat.
+ */
+template<std::size_t c, typename A>
+using repeat = typename dispatch::repeat<c, A>::type;
+
+namespace dispatch {
+namespace detail {
+template<typename R, typename C, typename A>
+struct flat_T;
+
+template<std::size_t... rows, std::size_t... columns, typename A>
+struct flat_T<std::index_sequence<rows...>,
+              std::index_sequence<columns...>,
+              A> {
+    using type = wired::array<wired::getitem<A, rows, columns>...>;
+};
+
+template<std::size_t nrows, typename A>
+struct reshape_T {
+private:
+    using pair = wired::split<nrows, A>;
+    using head = typename pair::first_type;
+    using tail = typename pair::second_type;
+
+public:
+    using type = wired::concat<array<head>,
+                               typename reshape_T<nrows, tail>::type>;
+};
+
+template<std::size_t nrows>
+struct reshape_T<nrows, array<>> {
+    using type = wired::array<>;
+};
+}  // namespace detail
+
+template<typename V>
+struct T;
+
+template<typename... Vs, typename... As>
+struct T<array<array<Vs...>, As...>> {
+private:
+    constexpr static std::size_t nrows = sizeof...(As) + 1;
+    constexpr static std::size_t ncols = sizeof...(Vs);
+
+    using base_rows = std::make_index_sequence<nrows>;
+    using base_columns = std::make_index_sequence<ncols>;
+
+
+    using rows = utils::tile_index_sequence<ncols, base_rows>;
+    using columns = utils::repeat_index_sequence<nrows, base_columns>;
+
+    using flat = typename detail::flat_T<rows,
+                                         columns,
+                                         array<array<Vs...>, As...>>::type;
+
+public:
+    using type = typename detail::reshape_T<nrows, flat>::type;
+};
+}  // namespace dispatch
+
+/** Transpose a 2d array.
+
+    @tparam V The array to transpose.
+ */
+template<typename V>
+using T = typename dispatch::T<V>::type;
+
+namespace dispatch {
+template<std::size_t ix, typename A>
+struct hsplit {
+private:
+    using split_T = wired::split<ix, wired::T<A>>;
+
+public:
+    using type = std::pair<wired::T<typename split_T::first_type>,
+                           wired::T<typename split_T::second_type>>;
+
+};
+}  // namespace dispatch
+
+/** Split an array along axis 1.
+
+    @tparam The pivot point.
+    @tparam A The array to split.
+ */
+template<std::size_t ix, typename A>
+using hsplit = typename dispatch::hsplit<ix, A>::type;
+
+namespace dispatch {
+template<typename A, typename B>
+struct dot;
+
+namespace detail {
+template<std::size_t dim, typename A, typename B>
+struct inner_dot;
+
+template<typename A, typename B>
+struct inner_dot<0, A, B> {
+    using type = wired::mul<A, B>;
+};
+
+template<typename A, typename B>
+struct inner_dot<1, A, B> {
+    using type = wired::sum<wired::mul<A, B>>;
+};
+
+template<typename A, typename Ix, typename B, typename Jx>
+struct flat_matmul;
+
+template<typename A, std::size_t... rows, typename BT, std::size_t... columns>
+struct flat_matmul<A, std::index_sequence<rows...>,
+                   BT, std::index_sequence<columns...>> {
+    using type = wired::array<typename dot<wired::getitem<A, rows>,
+                                           wired::getitem<BT, columns>>::type...>;
+};
+
+template<std::size_t nrows, typename A>
+struct reshape_matmul {
+private:
+    using pair = wired::split<nrows, A>;
+    using head = typename pair::first_type;
+    using tail = typename pair::second_type;
+
+public:
+    using type = wired::concat<array<head>,
+                               typename reshape_matmul<nrows, tail>::type>;
+};
+
+template<std::size_t nrows>
+struct reshape_matmul<nrows, array<>> {
+    using type = wired::array<>;
+};
+
+template<typename A, typename B>
+struct inner_dot<2, A, B> {
+private:
+    using BT = wired::T<B>;
+    constexpr static std::size_t nrows = wired::size<A>;
+    constexpr static std::size_t ncols = wired::size<BT>;
+
+    using base_rows = std::make_index_sequence<nrows>;
+    using base_columns = std::make_index_sequence<ncols>;
+
+    using rows = utils::repeat_index_sequence<ncols, base_rows>;
+    using columns = utils::tile_index_sequence<nrows, base_columns>;
+
+    using flat = typename flat_matmul<A, rows, BT, columns>::type;
+public:
+    using type = typename reshape_matmul<ncols, flat>::type;
+};
+}  // namespace detail
+
+template<typename A, typename B>
+struct dot {
+    using type =
+        typename detail::inner_dot<std::min(ndim<A>, ndim<B>), A, B>::type;
+};
+}  // namespace dispatch
+
+template<typename A, typename B>
+using dot = typename dispatch::dot<A, B>::type;
+
+namespace dispatch {
 template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
          typename... Vs,
          typename U>
@@ -252,6 +554,16 @@ template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
          typename A,
          typename B>
 struct binop_aligned;
+
+// note: without this dispatch, it is ambiguous if we mean:
+// "broadcast V against U" or "broadcast U against V", so we specialize the
+// case of op(size 1 array, size 1 array)
+template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
+         typename V,
+         typename U>
+struct binop_aligned<op, array<V>, array<U>> {
+    using type = array<typename binop<op, V, U>::type>;
+};
 
 template<std::int32_t op(std::int32_t, std::int32_t, std::uint8_t),
          typename V,
