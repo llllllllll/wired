@@ -66,7 +66,8 @@ def evaluate_wired(expr, include_dir=None):
     result : array-like
         The result of the expression.
     """
-    args = ['g++', '-std=gnu++17', '-x', 'c++', '-fno-diagnostics-color']
+    compiler = os.environ.get('CXX', 'g++')
+    args = [compiler, '-std=gnu++17', '-x', 'c++', '-fno-diagnostics-color']
     if include_dir is not None:
         args.append('-I' + os.fspath(include_dir))
     args.extend(['-o', '/dev/stdout', '-'])
