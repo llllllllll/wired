@@ -280,26 +280,27 @@ For example:
 
    In [1]: import psyche as ps
 
-   In [2]: a = ps.Expr([1, 2, 3])
+   In [2]: a = ps.Expr([2, 4, 6])
 
-   In [3]: b = ps.Expr([[-1], [-2], [-3]])
+   In [3]: b = ps.Expr([[-1], [-3], [-5]])
 
    In [4]: expr = (a * b).T
 
    In [5]: expr
-   Out[5]: Expr(T(Mul(Literal(array([1., 2., 3.])), Literal(array([[-1.], [-2.], [-3.]])))))
+   Out[5]: Expr(T(Mul(Literal(array([2., 4., 6.])), Literal(array([[-1.], [-3.], [-5.]])))))
 
    In [6]: ps.evaluate_numpy(expr)
    Out[6]:
-   array([[-1., -2., -3.],
-          [-2., -4., -6.],
-          [-3., -6., -9.]])
+   array([[ -2.,  -6., -10.],
+          [ -4., -12., -20.],
+          [ -6., -18., -30.]])
 
    In [7]: ps.evaluate_wired(expr, include_dir='include/')
    Out[7]:
-   array([[-1., -2., -3.],
-          [-2., -4., -6.],
-          [-3., -6., -9.]])
+   array([[ -2.,  -6., -10.],
+          [ -4., -12., -20.],
+          [ -6., -18., -30.]])
+
 
 
 The ``wired`` test suite is written in terms of ``psyche``
