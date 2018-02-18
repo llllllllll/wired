@@ -42,7 +42,7 @@ arrays are arrays of arrays of arrays, and so on.
 Given that we use variadic templates to hold the values, the name ``array`` is a
 lie, it is really more like a singly linked list.
 
-Note: ``wired`` does C++ values if they are acceptable for use as template
+Note: ``wired`` does use C++ values if they are acceptable for use as template
 arguments. For example ``wired::ndim`` (return the rank of an object) will
 expand to a ``std::size_t`` because that may be used as a template argument.
 
