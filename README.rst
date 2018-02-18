@@ -19,7 +19,7 @@ Method
 ------
 
 Encoding Values
-~~~~~~~~~~~~~~~
+```````````````
 
 Wired works by lifting all values into C++ types. For example, we would encode
 the value ``1.0`` as ``wired::from_integral<1>`` which expands to the type:
@@ -47,7 +47,7 @@ arguments. For example ``wired::ndim`` (return the rank of an object) will
 expand to a ``std::size_t`` because that may be used as a template argument.
 
 Fixed?
-~~~~~~
+``````
 
 ``double`` is not actually a valid template argument type.
 
@@ -71,7 +71,7 @@ less precise. This also means that we cannot take advantage of builtins like
 hardware.
 
 Encoding Functions
-~~~~~~~~~~~~~~~~~~
+``````````````````
 
 If C++ types are our values, then templated-using clauses are our (eager)
 functions! For example, calling ``add`` looks like:
@@ -118,7 +118,7 @@ To actually enter the closure, we need to request the type field, like:
 
 
 Getting back to C++ values
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``````````````````````````
 
 ``wired::fixed`` and ``wired::array`` both implement a ``constexpr static auto
 materialize()``. For scalars, this returns a ``double``. For arrays, this
