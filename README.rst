@@ -145,6 +145,60 @@ final weights vector as a ``constexpr std::array``.
 See the ``layer9-example`` directory for a fully working example of how this
 works.
 
+Performance
+```````````
+
+How does this compare to other machine learning libraries? Great question! Let's
+compare ``layer9`` to a popular Python machine learning framework: ``keras``.
+
+I re-implemented the simple perception from the ``layer9-example`` in keras like
+so:
+
+.. code-block:: python
+
+   In [1]: import keras
+   Using TensorFlow backend.
+
+   In [2]: input_node = keras.layers.Input(shape=(3,))
+
+   In [3]: output_node = keras.layers.Dense(1, activation='sigmoid')(input_node)
+
+   In [4]: model = keras.models.Model(input_node, output_node)
+
+   In [5]: model.compile('rmsprop', 'mse')
+
+   In [6]: samples = np.array([[0, 0, 1], [1, 1, 1], [1, 0, 1], [0, 1, 1]])
+
+   In [7]: observations = np.array([[0], [1], [1], [0]])
+
+
+Let's look at the training time:
+
+.. code-block:: python
+
+   In [8]: %timeit model.fit(samples, observations, epochs=100, verbose=False)
+   10 loops, best of 3: 54.7 ms per loop
+
+Note: I am using 100 epochs to match the ``layer9-example`` configuration.
+
+Now, let's see how long it takes ``layer9`` to train this simple model on this
+small data:
+
+.. code-block:: bash
+
+   $ time make layer9-example/predict
+
+   real    0m24.984s
+   user    0m23.091s
+   sys     0m1.762s
+
+Wow, only 25 seconds!
+
+Takeaway
+````````
+While you might be tempted to use ``keras`` or ``tensorflow`` based on these
+results, I think the simplicity of the ``wired`` execution model makes up for
+its slightly lower performance.
 
 ``protocol7``
 -------------
